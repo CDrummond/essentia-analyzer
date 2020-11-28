@@ -1,0 +1,10 @@
+{
+ "extractor":"bin/x86-64/essentia_streaming_extractor_music",
+ "essentia":"/home/Music/",
+ "lms":"/media/Music/",
+ "tmp":"/tmp/",
+ "db":"/home/user/.local/share/essentia.db",
+ "lmsdb":"/path/to/lms/Cache/library.db",
+ "stop":"stop",
+ "threads":7
+}
