@@ -5,6 +5,7 @@
 # GPLv3 license.
 #
 
+import gzip
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 _LOGGER = logging.getLogger(__name__)
 AUDIO_EXTENSIONS = ['m4a', 'mp3', 'ogg', 'flac']
+
 
 def get_files_to_analyse(db, lms_db, lms_path, path, files, essentia_root_len, tmp_path, tmp_path_len, meta_only):
     if not os.path.exists(path):
@@ -32,13 +34,54 @@ def get_files_to_analyse(db, lms_db, lms_path, path, files, essentia_root_len, t
         elif meta_only or not db.file_already_analysed(path[essentia_root_len:]):
             files.append({'abs':path, 'db':path[essentia_root_len:]})
 
-    
+
+def read_json_file(js):
+    try:
+        data = json.load(js)
+        resp = {
+                  'path': db_path,
+                  'tags': tags.read_tags(abs_path, tracks_db.GENRE_SEPARATOR),
+                  'danceable': float(data['highlevel']['danceability']['all']['danceable']),
+                  'aggressive': float(data['highlevel']['mood_aggressive']['all']['aggressive']),
+                  'electronic': float(data['highlevel']['mood_electronic']['all']['electronic']),
+                  'acoustic': float(data['highlevel']['mood_acoustic']['all']['acoustic']),
+                  'happy': float(data['highlevel']['mood_happy']['all']['happy']),
+                  'party': float(data['highlevel']['mood_party']['all']['party']),
+                  'relaxed': float(data['highlevel']['mood_relaxed']['all']['relaxed']),
+                  'sad': float(data['highlevel']['mood_sad']['all']['sad']),
+                  'dark': float(data['highlevel']['timbre']['all']['dark']),
+                  'tonal': float(data['highlevel']['tonal_atonal']['all']['tonal']),
+                  'voice': float(data['highlevel']['voice_instrumental']['all']['voice']),
+                  'bpm': int(data['rhythm']['bpm'])
+                }
+        return resp
+    except ValueError:
+        return None
+
+
 def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
     if 'stop' in config and os.path.exists(config['stop']):
         return None
-    _LOGGER.debug("[%d/%d] Analyze: %s" % (idx, total, db_path))
+
+    # Try to load previous JSON
     if 'json_cache' in config:
         jsfile = "%s/%s.json" % (config['json_cache'], db_path)
+        jsfileGz = "%s.gz" % jsfile
+        if os.path.exists(jsfile):
+            # Plain, uncompressed
+            with open(jsfile, 'r') as js:
+                resp = read_json_file(js)
+                if resp is not None:
+                    _LOGGER.debug("[%d/%d] Using cached analyze esults for %s" % (idx, total, db_path))
+                    return resp
+        elif os.path.exists(jsfileGz):
+            # GZIP compressed
+            with gzip.open(jsfileGz, 'r') as js:
+                resp = read_json_file(js)
+                if resp is not None:
+                    _LOGGER.debug("[%d/%d] Using cached analyze esults for %s" % (idx, total, db_path))
+                    return resp
+
         path = jsfile[:-(len(os.path.basename(jsfile)))-1]
         if not os.path.exists(path):
             try:
@@ -47,31 +90,22 @@ def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
                 pass
     else:
         jsfile = "%s/essentia-%d.json" % (tmp_path, idx)
+
     if not os.path.exists(jsfile):
+        _LOGGER.debug("[%d/%d] Analyze: %s" % (idx, total, db_path))
         subprocess.call([config['extractor'], abs_path, jsfile, "profile"], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if not os.path.exists(jsfile):
         return None
     try:
         resp = None
         with open(jsfile, 'r') as js:
-            data = json.load(js)
-            resp = {
-                      'path': db_path,
-                      'tags': tags.read_tags(abs_path, tracks_db.GENRE_SEPARATOR),
-                      'danceable': float(data['highlevel']['danceability']['all']['danceable']),
-                      'aggressive': float(data['highlevel']['mood_aggressive']['all']['aggressive']),
-                      'electronic': float(data['highlevel']['mood_electronic']['all']['electronic']),
-                      'acoustic': float(data['highlevel']['mood_acoustic']['all']['acoustic']),
-                      'happy': float(data['highlevel']['mood_happy']['all']['happy']),
-                      'party': float(data['highlevel']['mood_party']['all']['party']),
-                      'relaxed': float(data['highlevel']['mood_relaxed']['all']['relaxed']),
-                      'sad': float(data['highlevel']['mood_sad']['all']['sad']),
-                      'dark': float(data['highlevel']['timbre']['all']['dark']),
-                      'tonal': float(data['highlevel']['tonal_atonal']['all']['tonal']),
-                      'voice': float(data['highlevel']['voice_instrumental']['all']['voice']),
-                      'bpm': int(data['rhythm']['bpm'])
-                    }
-        if not 'json_cache' in config:
+            resp = read_json_file(js)
+        if 'json_cache' in config:
+            try:
+                subprocess.call(['gzip', js])
+            except:
+                pass # Don't throw errors - as may not have gzip?
+        else:
             os.remove(jsfile)
         return resp
     except ValueError:
@@ -100,6 +134,7 @@ def analyze_tracks(db, allfiles, tmp_path, config, total):
             except Exception as e:
                 _LOGGER.debug("Thread exception? - %s" % str(e))
                 pass
+
 
 def analyse_files(config, remove_tracks, meta_only): # TODO meta_only
     _LOGGER.debug('Music path: %s' % config['essentia'])
