@@ -32,7 +32,7 @@ def read_config(path):
             _LOGGER.error("'%s' not in config file" % key)
             exit(-1)
 
-    for key in ['essentia', 'lms']:
+    for key in ['essentia']:
         if not key in config:
             _LOGGER.error("'%s' not in config file" % key)
             exit(-1)
