@@ -27,7 +27,7 @@ def read_config(path):
         _LOGGER.error('Failed to read config file')
         exit(-1)
 
-    for key in ['extractor']:
+    for key in ['extractor', 'essentia']:
         if not key in config:
             _LOGGER.error("'%s' not in config file" % key)
             exit(-1)
@@ -41,7 +41,7 @@ def read_config(path):
             exit(-1)
 
     for key in config:
-        if key not in ['threads', 'extractor', 'port', 'genres', 'db', 'lmsdb', 'stop'] and not config[key].endswith('/'):
+        if key not in ['threads', 'extractor', 'db', 'lmsdb', 'stop'] and not config[key].endswith('/'):
             config[key]=config[key]+'/'
 
     for path in ['tmp', 'json_cache']:
