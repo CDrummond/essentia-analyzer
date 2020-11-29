@@ -121,7 +121,7 @@ def analyze_tracks(db, allfiles, tmp_path, config, total):
     count_since_save = 0
     with ThreadPoolExecutor(max_workers=config['threads']) as executor:
         for i in range(numtracks):
-            futures = executor.submit(analyze_track, i, allfiles[i]['db'], allfiles[i]['abs'], tmp_path, config, total)
+            futures = executor.submit(analyze_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], tmp_path, config, total)
             futures_list.append(futures)
         for future in futures_list:
             try:
