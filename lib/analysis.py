@@ -9,6 +9,7 @@ import gzip
 import json
 import logging
 import os
+import pathlib
 import sqlite3
 import subprocess
 import tempfile
@@ -35,7 +36,7 @@ def get_files_to_analyse(db, lms_db, lms_path, path, files, essentia_root_len, t
             files.append({'abs':path, 'db':path[essentia_root_len:]})
 
 
-def read_json_file(js):
+def read_json_file(js, db_path, abs_path):
     try:
         data = json.load(js)
         resp = {
@@ -70,16 +71,16 @@ def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
         if os.path.exists(jsfile):
             # Plain, uncompressed
             with open(jsfile, 'r') as js:
-                resp = read_json_file(js)
+                resp = read_json_file(js, db_path, abs_path)
                 if resp is not None:
-                    _LOGGER.debug("[%d/%d] Using cached analyze esults for %s" % (idx, total, db_path))
+                    _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
                     return resp
         elif os.path.exists(jsfileGz):
             # GZIP compressed
             with gzip.open(jsfileGz, 'r') as js:
-                resp = read_json_file(js)
+                resp = read_json_file(js, db_path, abs_path)
                 if resp is not None:
-                    _LOGGER.debug("[%d/%d] Using cached analyze esults for %s" % (idx, total, db_path))
+                    _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
                     return resp
 
         path = jsfile[:-(len(os.path.basename(jsfile)))-1]
@@ -92,17 +93,18 @@ def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
         jsfile = "%s/essentia-%d.json" % (tmp_path, idx)
 
     if not os.path.exists(jsfile):
-        _LOGGER.debug("[%d/%d] Analyze: %s" % (idx, total, db_path))
-        subprocess.call([config['extractor'], abs_path, jsfile, "profile"], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        _LOGGER.debug('[%d/%d] Analyzing: %s' % (idx, total, db_path))
+        subprocess.call([config['extractor'], abs_path, jsfile, 'profile'], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=pathlib.Path(__file__).parent.parent.absolute())
     if not os.path.exists(jsfile):
+        _LOGGER.error('[%d/%d] Analysis of %s failed, no JSON created' % (idx, total, db_path))
         return None
     try:
         resp = None
         with open(jsfile, 'r') as js:
-            resp = read_json_file(js)
+            resp = read_json_file(js, db_path, abs_path)
         if 'json_cache' in config:
             try:
-                subprocess.call(['gzip', js])
+                subprocess.call(['gzip', jsfile])
             except:
                 pass # Don't throw errors - as may not have gzip?
         else:
