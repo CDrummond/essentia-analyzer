@@ -40,7 +40,8 @@ This has the following format:
  "lmsdb":"/path/to/lms/Cache/library.db",
  "json_cache":"/path/to/store/essentia/json/files/",
  "stop":"stop",
- "threads":7
+ "threads":7,
+ "normalize":false
 }
 ```
 
@@ -65,6 +66,8 @@ here, and if found the script will gracefully terminate.
 * `threads` Number of threads to use during analysis phase. This controls how
 many calls to `ffmpeg` are made concurrently, and how many concurrent tracks
 essentia is asked to analyse.
+* `normalize` if set to true, then artist and album tags are converted to lower
+case, dots and brackets removed, etc.
 
 ## Credits
 

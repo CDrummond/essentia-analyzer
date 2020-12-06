@@ -41,7 +41,7 @@ def read_config(path):
             exit(-1)
 
     for key in config:
-        if key not in ['threads', 'extractor', 'db', 'lmsdb', 'stop'] and not config[key].endswith('/'):
+        if key not in ['threads', 'extractor', 'db', 'lmsdb', 'stop', 'genres', 'port'] and not config[key].endswith('/'):
             config[key]=config[key]+'/'
 
     for path in ['tmp', 'json_cache']:
