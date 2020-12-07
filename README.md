@@ -66,8 +66,34 @@ here, and if found the script will gracefully terminate.
 * `threads` Number of threads to use during analysis phase. This controls how
 many calls to `ffmpeg` are made concurrently, and how many concurrent tracks
 essentia is asked to analyse.
-* `normalize` if set to true, then artist and album tags are converted to lower
-case, dots and brackets removed, etc.
+
+## Normalizing artists, albums, etc.
+
+To 'normalize' certain strings (e.g. remove brackets, convert to lowercase, etc)
+use the `update-db.py` script: e.g.
+
+```
+./update-db.py --db essentia.db --normalize
+```
+
+## Ignoring artists, albums, etc.
+
+To mark certains items as 'ignored' (i.e. so that they are not added to mixes),
+create a text file where each line contains the unique path, e.g.:
+
+```
+AC-DC/Power Up/
+The Police/
+```
+
+Then call:
+
+```
+./update-db.py --db essentia.db --ignore ignore.txt
+```
+
+This basically sets the `ignore` column to 1 for all items whose file starts
+with one of the listed lines.
 
 ## Credits
 

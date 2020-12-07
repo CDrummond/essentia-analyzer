@@ -10,7 +10,6 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-normalizeTags = False
 
 def get_ogg_or_flac(path):
     from mutagen.oggflac import OggFLAC
@@ -37,20 +36,6 @@ def get_ogg_or_flac(path):
     return None
 
 
-def normalize(s):
-    global normalizeTags
-    if not normalizeTags or not s:
-        return s
-    return s.lower().replace('.', '').replace('(', '').replace(')', '').replace(' & ', ' and ')
-
-
-def normalize_artist(artist):
-    global normalizeTags
-    if not normalizeTags or not artist:
-        return artist
-    return normalize(artist).replace(' feat ', ' ').replace(' ft ', ' ').replace(' featuring ', ' ')
-
-
 def read_tags(path, genre_separator):
     from mutagen.id3 import ID3
     from mutagen.mp3 import MP3
@@ -58,9 +43,9 @@ def read_tags(path, genre_separator):
 
     try:
         audio = MP4(path)
-        tags = {'artist':normalize_artist(str(audio['\xa9ART'][0])), 'album':normalize(str(audio['\xa9alb'][0])), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        tags = {'artist':str(audio['\xa9ART'][0]), 'album':str(audio['\xa9alb'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
         if 'aART' in audio:
-            tags['albumartist']=normalize_artist(str(audio['aART'][0]))
+            tags['albumartist']=str(audio['aART'][0])
         if '\xa9gen' in audio:
             tags['genres']=[]
             for g in audio['\xa9gen']:
@@ -72,9 +57,9 @@ def read_tags(path, genre_separator):
 
     try:
         audio = MP3(path)
-        tags = {'artist':normalize_artist(str(audio['TPE1'])), 'album':normalize(str(audio['TALB'])), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        tags = {'artist':str(audio['TPE1']), 'album':normalize_album(str(audio['TALB']), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
         if 'TPE2' in audio:
-            tags['albumartist']=normalize_artist(str(audio['TPE2']))
+            tags['albumartist']=str(audio['TPE2'])
         if 'TCON' in audio:
             tags['genres']=str(audio['TCON']).split(genre_separator)
         #_LOGGER.debug('MP3 File: %s Meta: %s' % (path, json.dumps(tags)))
@@ -85,9 +70,9 @@ def read_tags(path, genre_separator):
 
     try:
         audio = ID3(path)
-        tags = {'artist':normalize_artist(str(audio['TPE1'])), 'album':normalize(str(audio['TALB'])), 'duration':0, 'albumartist':None, 'genres':None}
+        tags = {'artist':str(audio['TPE1']), 'album':str(audio['TALB']), 'duration':0, 'albumartist':None, 'genres':None}
         if 'TPE2' in audio:
-            tags['albumartist']=normalize_artist(str(audio['TPE2']))
+            tags['albumartist']=str(audio['TPE2'])
         if 'TCON' in audio:
             tags['genres']=str(audio['TCON']).split(genre_separator)
         #_LOGGER.debug('ID3 File: %s Meta: %s' % (path, json.dumps(tags)))
@@ -97,9 +82,9 @@ def read_tags(path, genre_separator):
 
     audio = get_ogg_or_flac(path)
     if audio:
-        tags = {'artist':normalize_artist(str(audio['ARTIST'][0])), 'album':normalize(str(audio['ALBUM'][0])), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
-        if 'ALBUMARTIST' in audio:
-            tags['albumartist']=normalize_artist(str(audio['ALBUMARTIST'][0]))
+        tags = {'artist':str(audio['ARTIST'][0]), 'album':str(audio['ALBUM'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        if 'ALBUMARTIST' in audio
+            tags['albumartist']=str(audio['ALBUMARTIST'][0])
         if 'GENRE' in audio:
             tags['genres']=[]
             for g in audio['GENRE']:
