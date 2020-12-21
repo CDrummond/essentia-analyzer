@@ -20,10 +20,7 @@ If the analysis locates a music file with a similarly named CUE file (e.g.
 read the track listing from the LMS db file and use `ffmpeg` to split the
 music file into temporary 128kbps MP3 files for analysis. The files are removed
 once analysis is complete.
-which if set to `1` will cause the API to not use this track if it is returned
-as a similar track by essentia. In this way you can exclude specific tracks from
-being added to mixes - but if they are already in the queue, then they can sill
-be used as seed tracks.
+
 
 ## Configuration
 
@@ -45,14 +42,19 @@ This has the following format:
 }
 ```
 
-* `extractor` contains the location of the Essendia extractor binary.
+* `extractor` contains the location of the Essentia extractor binary.
 * `essentia` is the path to your music files on the current machine. This script
-will store music paths relative to the path configured here.
+will store music paths relative to the path configured here. e.g. if this is set
+to `/home/user/Music/` then `/home/user/Music/ABBA/Greatest Hits/Waterloo.mp3` will
+be stored as `ABBA/Greatest Hits/Waterloo.mp3`
 * `lms` is the path of your music as LMS sees it. This is needed when analyzing
-CUE files. The scrit will look for track details in LMS's db and use this config
-item to ammend the paths as required.
+CUE files. The script will look for track details in LMS's db and use this config
+item to ammend the paths as required. e.g. if `lms` is set to `/disk2/Music` and
+`essentia` set to `/home/user/Music/` the script will convert `/disk2/Music/Artist/Album.cue`
+to `/home/user/Music/Artist/Album.cue` This is to cater for cases where LMS is on
+another machine (e.g. a raspberry pi) but you want to analyze on a faster machine.
 * `tmp` when handling CUE files, the script will use this directory to store the
-tempororary MP3 files.
+temporary MP3 files.
 * `db` is the name of the database file that will be created.
 * `lmsdb` should contain the location of LMS's library DB. This is only required
 if handling CUE files.
@@ -62,7 +64,9 @@ directory and removed when done. To keep these files, for later usage, you can
 specify an alternative folder via `json_cache` - and these files will not be
 removed.
 * `stop` when runnnig the script will check for the presence of the filename set
-here, and if found the script will gracefully terminate.
+here, and if found the script will gracefully terminate. This allows you to start
+analyzing a large music collection but stop half way through. (When re-started
+the anlyzer will resume from where it stopped).
 * `threads` Number of threads to use during analysis phase. This controls how
 many calls to `ffmpeg` are made concurrently, and how many concurrent tracks
 essentia is asked to analyse.
@@ -75,6 +79,11 @@ use the `update-db.py` script: e.g.
 ```
 ./update-db.py --db essentia.db --normalize
 ```
+
+**NOTE** This normalzing will change the DB entries, so its better to take a copy
+of the non-normalized database so that you can revert changes. In future I might
+remove this option here and do the normalization in `essentia-api` when it reads
+info from the database.
 
 ## Ignoring artists, albums, etc.
 
@@ -94,6 +103,11 @@ Then call:
 
 This basically sets the `ignore` column to 1 for all items whose file starts
 with one of the listed lines.
+
+Setting a track's `ignore` to `1` will cause the API to not use this track if
+it is returned as a similar track by essentia. In this way you can exclude
+specific tracks from being added to mixes - but if they are already in the
+queue, then they can sill be used as seed tracks.
 
 ## Credits
 
