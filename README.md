@@ -37,8 +37,7 @@ This has the following format:
  "lmsdb":"/path/to/lms/Cache/library.db",
  "json_cache":"/path/to/store/essentia/json/files/",
  "stop":"stop",
- "threads":7,
- "normalize":false
+ "threads":7
 }
 ```
 
