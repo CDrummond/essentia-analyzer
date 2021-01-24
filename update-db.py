@@ -58,7 +58,7 @@ def normalize_artist(artist):
 
 def ignore(conn, cursor, f):
     if not os.path.exists(f):
-        error('%s does not exist' % path)
+        error('%s does not exist' % f)
 
     try:
         lines=[]
