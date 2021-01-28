@@ -138,12 +138,17 @@ def analyze_tracks(db, allfiles, tmp_path, config, total):
                 pass
 
 
-def analyse_files(config, remove_tracks, meta_only): # TODO meta_only
+def update_db(db, files):
+    for f in files:
+        db.update(f)
+
+
+def analyse_files(config, remove_tracks, meta_only):
     _LOGGER.debug('Music path: %s' % config['essentia'])
     db = tracks_db.TracksDb(config)
     lms_db = sqlite3.connect(config['lmsdb']) if 'lmsdb' in config else None
     temp_dir = config['tmp'] if 'tmp' in config else None
-    removed_tracks = db.remove_old_tracks(config['essentia']) if remove_tracks and not meta_only else False
+    removed_tracks = db.remove_old_tracks(config['essentia']) if remove_tracks else False
 
     with tempfile.TemporaryDirectory(dir=temp_dir) as tmp_path:
         _LOGGER.debug('Temp folder: %s' % tmp_path)
@@ -153,8 +158,11 @@ def analyse_files(config, remove_tracks, meta_only): # TODO meta_only
         cue.split_cue_tracks(files, config['threads'])
         num_to_analyze = len(files)
         if num_to_analyze>0 or removed_tracks:
-            if num_to_analyze>0 and not meta_only:
-                analyze_tracks(db, files, tmp_path, config, num_to_analyze)
+            if num_to_analyze>0:
+                if meta_only:
+                    update_db(db, files)
+                else:
+                    analyze_tracks(db, files, tmp_path, config, num_to_analyze)
             db.commit()
             db.close()
     _LOGGER.debug('Finished analysis')

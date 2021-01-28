@@ -55,7 +55,24 @@ class TracksDb(object):
         genre = None
         if 'genres' in track['tags'] and track['tags']['genres'] is not None:
             genre = GENRE_SEPARATOR.join(track['tags']['genres'])
-        self.cursor.execute('INSERT INTO tracks (file, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['tags']['artist'], track['tags']['album'], track['tags']['albumartist'], genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
+
+        albumartist = None
+        if 'albumartist' in track['tags'] and track['tags']['albumartist'] is not None:
+            albumartist = track['tags']['albumartist']
+
+        self.cursor.execute('INSERT INTO tracks (file, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
+
+
+    def update(self, track):
+        genre = None
+        if 'genres' in track['tags'] and track['tags']['genres'] is not None:
+            genre = GENRE_SEPARATOR.join(track['tags']['genres'])
+
+        albumartist = None
+        if 'albumartist' in track['tags'] and track['tags']['albumartist'] is not None:
+            albumartist = track['tags']['albumartist']
+
+        self.cursor.execute('UPDATE tracks SET artist=?, album=?, albumartist=?, genre=?, duration=? WHERE file=?', (track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], track['path']))
 
 
     def remove_old_tracks(self, source_path):
