@@ -43,7 +43,7 @@ def read_tags(path, genre_separator):
 
     try:
         audio = MP4(path)
-        tags = {'artist':str(audio['\xa9ART'][0]), 'album':str(audio['\xa9alb'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        tags = {'title':str(audio['\xa9nam'][0]), 'artist':str(audio['\xa9ART'][0]), 'album':str(audio['\xa9alb'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
         if 'aART' in audio:
             tags['albumartist']=str(audio['aART'][0])
         if '\xa9gen' in audio:
@@ -57,7 +57,7 @@ def read_tags(path, genre_separator):
 
     try:
         audio = MP3(path)
-        tags = {'artist':str(audio['TPE1']), 'album':str(audio['TALB']), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        tags = {'title':str(audio['TIT2']), 'artist':str(audio['TPE1']), 'album':str(audio['TALB']), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
         if 'TPE2' in audio:
             tags['albumartist']=str(audio['TPE2'])
         if 'TCON' in audio:
@@ -70,7 +70,7 @@ def read_tags(path, genre_separator):
 
     try:
         audio = ID3(path)
-        tags = {'artist':str(audio['TPE1']), 'album':str(audio['TALB']), 'duration':0, 'albumartist':None, 'genres':None}
+        tags = {'title':str(audio['TIT2']), 'artist':str(audio['TPE1']), 'album':str(audio['TALB']), 'duration':0, 'albumartist':None, 'genres':None}
         if 'TPE2' in audio:
             tags['albumartist']=str(audio['TPE2'])
         if 'TCON' in audio:
@@ -82,7 +82,7 @@ def read_tags(path, genre_separator):
 
     audio = get_ogg_or_flac(path)
     if audio:
-        tags = {'artist':str(audio['ARTIST'][0]), 'album':str(audio['ALBUM'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
+        tags = {'title':str(audio['TITLE'][0]), 'artist':str(audio['ARTIST'][0]), 'album':str(audio['ALBUM'][0]), 'duration':int(audio.info.length), 'albumartist':None, 'genres':None}
         if 'ALBUMARTIST' in audio:
             tags['albumartist']=str(audio['ALBUMARTIST'][0])
         if 'GENRE' in audio:

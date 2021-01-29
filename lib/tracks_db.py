@@ -21,6 +21,7 @@ class TracksDb(object):
         self.cursor = self.conn.cursor()
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS tracks (
                     file varchar PRIMARY KEY NOT NULL,
+                    title varchar,
                     artist varchar,
                     album varchar,
                     albumartist varchar,
@@ -40,6 +41,11 @@ class TracksDb(object):
                     voice integer,
                     bpm integer)''')
         self.cursor.execute('CREATE UNIQUE INDEX IF NOT EXISTS tracks_idx ON tracks(file)')
+        # Add 'title' column - will fail if already exists (which it should, but older instances might not have it)
+        try:
+            self.cursor.execute('ALTER TABLE tracks ADD COLUMN title varchar default null')
+        except:
+            pass
 
 
     def commit(self):
@@ -60,7 +66,7 @@ class TracksDb(object):
         if 'albumartist' in track['tags'] and track['tags']['albumartist'] is not None:
             albumartist = track['tags']['albumartist']
 
-        self.cursor.execute('INSERT INTO tracks (file, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
+        self.cursor.execute('INSERT INTO tracks (file, title, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['title'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
 
 
     def update(self, track):
@@ -72,7 +78,7 @@ class TracksDb(object):
         if 'albumartist' in track['tags'] and track['tags']['albumartist'] is not None:
             albumartist = track['tags']['albumartist']
 
-        self.cursor.execute('UPDATE tracks SET artist=?, album=?, albumartist=?, genre=?, duration=? WHERE file=?', (track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], track['path']))
+        self.cursor.execute('UPDATE tracks SET title=?, artist=?, album=?, albumartist=?, genre=?, duration=? WHERE file=?', (track['tags']['title'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], track['path']))
 
 
     def remove_old_tracks(self, source_path):
