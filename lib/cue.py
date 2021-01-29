@@ -21,14 +21,14 @@ def get_cue_tracks(lms_db, lms_path, path, essentia_root_len, tmp_path):
         # Convert musly path into LMS path...
         lms_full_path = '%s%s' % (lms_path, path[essentia_root_len:])
         # Get list of cue tracks from LMS db...
-        cursor = lms_db.execute("select url from tracks where url like '%%%s#%%'" % quote(lms_full_path))
+        cursor = lms_db.execute("select url, title from tracks where url like '%%%s#%%'" % quote(lms_full_path))
         for row in cursor:
             parts=row[0].split('#')
             if 2==len(parts):
                 times=parts[1].split('-')
                 if 2==len(times):
                     track_path='%s%s%s%s-%s.mp3' % (tmp_path, path[essentia_root_len:], CUE_TRACK, times[0], times[1])
-                    tracks.append({'file':track_path, 'start':times[0], 'end':times[1]})
+                    tracks.append({'file':track_path, 'start':times[0], 'end':times[1], 'title':row[1]})
     else:
         _LOGGER.debug("Can't get CUE tracks for %s - no LMS DB" % path)
     return tracks

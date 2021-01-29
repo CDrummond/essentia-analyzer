@@ -60,7 +60,7 @@ def read_json_file(js, db_path, abs_path):
         return None
 
 
-def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
+def analyse_track(idx, db_path, abs_path, tmp_path, config, total):
     if 'stop' in config and os.path.exists(config['stop']):
         return None
 
@@ -115,13 +115,13 @@ def analyze_track(idx, db_path, abs_path, tmp_path, config, total):
     return None
 
 
-def analyze_tracks(db, allfiles, tmp_path, config, total):
+def analyse_tracks(db, allfiles, tmp_path, config, total):
     numtracks = len(allfiles)
     futures_list = []
     count_since_save = 0
     with ThreadPoolExecutor(max_workers=config['threads']) as executor:
         for i in range(numtracks):
-            futures = executor.submit(analyze_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], tmp_path, config, total)
+            futures = executor.submit(analyse_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], tmp_path, config, total)
             futures_list.append(futures)
         for future in futures_list:
             try:
@@ -140,7 +140,11 @@ def analyze_tracks(db, allfiles, tmp_path, config, total):
 
 def update_db(db, files):
     for f in files:
-        db.update(f)
+        _LOGGER.debug('Reading metadata for %s' % f['abs'])
+        meta = tags.read_tags(f['abs'], tracks_db.GENRE_SEPARATOR)
+        if 'track' in f and 'title' in f['track']: # Tracks from CUE files
+            meta['title'] = f['track']['title']
+        db.update({'path':f['db'], 'tags':meta})
 
 
 def analyse_files(config, remove_tracks, meta_only):
@@ -162,7 +166,7 @@ def analyse_files(config, remove_tracks, meta_only):
                 if meta_only:
                     update_db(db, files)
                 else:
-                    analyze_tracks(db, files, tmp_path, config, num_to_analyze)
+                    analyse_tracks(db, files, tmp_path, config, num_to_analyze)
             db.commit()
             db.close()
     _LOGGER.debug('Finished analysis')
