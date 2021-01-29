@@ -70,19 +70,6 @@ the anlyzer will resume from where it stopped).
 many calls to `ffmpeg` are made concurrently, and how many concurrent tracks
 essentia is asked to analyse.
 
-## Normalizing artists, albums, etc.
-
-To 'normalize' certain strings (e.g. remove brackets, convert to lowercase, etc)
-use the `update-db.py` script: e.g.
-
-```
-./update-db.py --db essentia.db --normalize
-```
-
-**NOTE** This normalzing will change the DB entries, so its better to take a copy
-of the non-normalized database so that you can revert changes. In future I might
-remove this option here and do the normalization in `essentia-api` when it reads
-info from the database.
 
 ## Ignoring artists, albums, etc.
 
