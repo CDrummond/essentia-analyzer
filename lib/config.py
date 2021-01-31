@@ -50,6 +50,6 @@ def read_config(path):
             exit(-1)
 
     if not 'threads' in config:
-        config['threads']=8
+        config['threads']=os.cpu_count()
 
     return config

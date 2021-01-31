@@ -69,7 +69,7 @@ start analyzing a large music collection but stop half way through. (When
 re-started the anlyzer will resume from where it stopped).
 * `threads` Number of threads to use during analysis phase. This controls how
 many calls to `ffmpeg` are made concurrently, and how many concurrent tracks
-essentia is asked to analyse.
+essentia is asked to analyse. Defaults to CPU count, if not set.
 
 
 ## Ignoring artists, albums, etc.
