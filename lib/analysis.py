@@ -36,12 +36,13 @@ def get_files_to_analyse(db, lms_db, lms_path, path, files, essentia_root_len, t
             files.append({'abs':path, 'db':path[essentia_root_len:]})
 
 
-def read_json_file(js, db_path, abs_path):
+def read_json_file(js, db_path, abs_path, cue_track):
     try:
         data = json.load(js)
+
         resp = {
                   'path': db_path,
-                  'tags': tags.read_tags(abs_path, tracks_db.GENRE_SEPARATOR),
+                  'tags': tags.read_tags(abs_path, tracks_db.GENRE_SEPARATOR) if cue_track is None else cue_track['meta'],
                   'danceable': float(data['highlevel']['danceability']['all']['danceable']),
                   'aggressive': float(data['highlevel']['mood_aggressive']['all']['aggressive']),
                   'electronic': float(data['highlevel']['mood_electronic']['all']['electronic']),
@@ -60,7 +61,7 @@ def read_json_file(js, db_path, abs_path):
         return None
 
 
-def analyse_track(idx, db_path, abs_path, tmp_path, config, total):
+def analyse_track(idx, db_path, abs_path, cue_track, tmp_path, config, total):
     if 'stop' in config and os.path.exists(config['stop']):
         return None
 
@@ -71,14 +72,14 @@ def analyse_track(idx, db_path, abs_path, tmp_path, config, total):
         if os.path.exists(jsfile):
             # Plain, uncompressed
             with open(jsfile, 'r') as js:
-                resp = read_json_file(js, db_path, abs_path)
+                resp = read_json_file(js, db_path, abs_path, cue_track)
                 if resp is not None:
                     _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
                     return resp
         elif os.path.exists(jsfileGz):
             # GZIP compressed
             with gzip.open(jsfileGz, 'r') as js:
-                resp = read_json_file(js, db_path, abs_path)
+                resp = read_json_file(js, db_path, abs_path, cue_track)
                 if resp is not None:
                     _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
                     return resp
@@ -101,7 +102,7 @@ def analyse_track(idx, db_path, abs_path, tmp_path, config, total):
     try:
         resp = None
         with open(jsfile, 'r') as js:
-            resp = read_json_file(js, db_path, abs_path)
+            resp = read_json_file(js, db_path, abs_path, cue_track)
         if 'json_cache' in config:
             try:
                 subprocess.call(['gzip', jsfile])
@@ -121,7 +122,8 @@ def analyse_tracks(db, allfiles, tmp_path, config, total):
     count_since_save = 0
     with ThreadPoolExecutor(max_workers=config['threads']) as executor:
         for i in range(numtracks):
-            futures = executor.submit(analyse_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], tmp_path, config, total)
+            cue_track = allfiles[i]['track'] if 'track'  in allfiles[i] else None
+            futures = executor.submit(analyse_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], cue_track, tmp_path, config, total)
             futures_list.append(futures)
         for future in futures_list:
             try:
@@ -140,10 +142,8 @@ def analyse_tracks(db, allfiles, tmp_path, config, total):
 
 def update_db(db, files):
     for f in files:
-        _LOGGER.debug('Reading metadata for %s' % f['abs'])
-        meta = tags.read_tags(f['abs'], tracks_db.GENRE_SEPARATOR)
-        if 'track' in f and 'title' in f['track']: # Tracks from CUE files
-            meta['title'] = f['track']['title']
+        _LOGGER.debug('Updating metadata for %s' % f['abs'])
+        meta = f['track']['meta'] if 'track' in f and 'meta' in f['track'] else tags.read_tags(f['abs'], tracks_db.GENRE_SEPARATOR)
         db.update({'path':f['db'], 'tags':meta})
 
 
@@ -159,7 +159,8 @@ def analyse_files(config, remove_tracks, meta_only):
         files=[]
         get_files_to_analyse(db, lms_db, config['lms'], config['essentia'], files, len(config['essentia']), tmp_path+'/', len(tmp_path)+1, meta_only)
         _LOGGER.debug('Num tracks to update: %d' % len(files))
-        cue.split_cue_tracks(files, config['threads'])
+        if not meta_only:
+            cue.split_cue_tracks(files, config['threads'])
         num_to_analyze = len(files)
         if num_to_analyze>0 or removed_tracks:
             if num_to_analyze>0:

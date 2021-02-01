@@ -18,17 +18,47 @@ _LOGGER = logging.getLogger(__name__)
 def get_cue_tracks(lms_db, lms_path, path, essentia_root_len, tmp_path):
     tracks=[]
     if lms_db is not None:
-        # Convert musly path into LMS path...
+        _LOGGER.debug('Reading CUE metadata for %s' % path[essentia_root_len:])
+        # Convert essentia path into LMS path...
         lms_full_path = '%s%s' % (lms_path, path[essentia_root_len:])
         # Get list of cue tracks from LMS db...
-        cursor = lms_db.execute("select url, title from tracks where url like '%%%s#%%'" % quote(lms_full_path))
+        cursor = lms_db.execute("select url, title, id, album, secs from tracks where url like '%%%s#%%'" % quote(lms_full_path))
         for row in cursor:
             parts=row[0].split('#')
             if 2==len(parts):
                 times=parts[1].split('-')
                 if 2==len(times):
-                    track_path='%s%s%s%s-%s.mp3' % (tmp_path, path[essentia_root_len:], CUE_TRACK, times[0], times[1])
-                    tracks.append({'file':track_path, 'start':times[0], 'end':times[1], 'title':row[1]})
+                    track_artist=None
+                    album_artist=None
+                    album_name=None
+                    contributors = lms_db.execute("select contributor, role from contributor_track where track=?", (row[2],)).fetchall()
+                    genres = lms_db.execute("select genre from genre_track where track=?", (row[2],)).fetchall()
+                    album = lms_db.execute("select title from albums where id=?", (row[3],)).fetchone()
+                    genre_list = []
+                    if albums is not None:
+                        album_name = album[0]
+                    if genres is not None:
+                        for g in genres:
+                            genre = lms_db.execute("select name from genres where id=?", (g[0],)).fetchone()
+                            if genre is not None:
+                                genre_list.append(genre[0])
+                    if contributors is not None:
+                        for cont in contributors:
+                            if track_artist is None and(1 == cont[1] or 6 == cont[1]):
+                                contributor = lms_db.execute("select name from contributors where id=?", (cont[0],)).fetchone()
+                                if contributor is not None:
+                                    track_artist=contributor[0]
+                            elif album_artist is None and 5 == cont[1]:
+                                contributor = lms_db.execute("select name from contributors where id=?", (cont[0],)).fetchone()
+                                if contributor is not None:
+                                    album_artist=contributor[0]
+                        if album_artist is None:
+                            album_artist = track_artist
+                        elif track_artist is None:
+                            track_artist = album_artist
+                    if track_artist is not None and album_name is not None:
+                        track_path='%s%s%s%s-%s.mp3' % (tmp_path, path[essentia_root_len:], CUE_TRACK, times[0], times[1])
+                        tracks.append({'file':track_path, 'start':times[0], 'end':times[1], 'meta':{'title':row[1], 'artist':track_artist, 'albumartist':album_artist, 'album':album_name, 'genres':genre_list, 'duration':int(row[4])}})
     else:
         _LOGGER.debug("Can't get CUE tracks for %s - no LMS DB" % path)
     return tracks
