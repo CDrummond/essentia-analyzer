@@ -66,7 +66,7 @@ class TracksDb(object):
         if 'albumartist' in track['tags'] and track['tags']['albumartist'] is not None:
             albumartist = track['tags']['albumartist']
 
-        self.cursor.execute('INSERT INTO tracks (file, title, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['title'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
+        self.cursor.execute('INSERT INTO tracks (file, title, artist, album, albumartist, genre, duration, ignore, danceable, aggressive, electronic, acoustic, happy, party, relaxed, sad, dark, tonal, voice, bpm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', (track['path'], track['tags']['title'], track['tags']['artist'], track['tags']['album'], albumartist, genre, track['tags']['duration'], 0, track['danceable'], track['aggressive'], track['electronic'], track['acoustic'], track['happy'], track['party'], track['relaxed'], track['sad'], track['dark'], track['tonal'], track['voice'], track['bpm']))
 
 
     def update(self, track):
