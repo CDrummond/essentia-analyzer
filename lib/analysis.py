@@ -122,12 +122,12 @@ def analyse_tracks(db, allfiles, tmp_path, config, total):
     count_since_save = 0
     with ThreadPoolExecutor(max_workers=config['threads']) as executor:
         for i in range(numtracks):
-            cue_track = allfiles[i]['track'] if 'track'  in allfiles[i] else None
-            futures = executor.submit(analyse_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], cue_track, tmp_path, config, total)
+            cue_track = allfiles[i]['track'] if 'track' in allfiles[i] else None
+            futures = {'exe': executor.submit(analyse_track, i+1, allfiles[i]['db'], allfiles[i]['abs'], cue_track, tmp_path, config, total), 'path':allfiles[i]['db']}
             futures_list.append(futures)
         for future in futures_list:
             try:
-                result = future.result()
+                result = future['exe'].result()
                 if result:
                     count_since_save += 1
                     db.add(result)
@@ -136,7 +136,7 @@ def analyse_tracks(db, allfiles, tmp_path, config, total):
                         db.commit()
                         count_since_save = 0
             except Exception as e:
-                _LOGGER.debug("Thread exception? - %s" % str(e))
+                _LOGGER.debug("%s - Thread exception? - %s (%s)" % (future['path'], str(e)))
                 pass
 
 
