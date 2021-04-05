@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 
-APP_NAME = "essentia-server"
+APP_NAME = "essentia-analyzer"
 
 def info(s):
     print("INFO: %s" %s)
