@@ -65,6 +65,7 @@ def analyse_track(idx, db_path, abs_path, cue_track, tmp_path, config, total):
     if 'stop' in config and os.path.exists(config['stop']):
         return None
 
+    pc = int(idx*100/total)
     # Try to load previous JSON
     if 'json_cache' in config:
         jsfile = "%s/%s.json" % (config['json_cache'], db_path)
@@ -74,14 +75,14 @@ def analyse_track(idx, db_path, abs_path, cue_track, tmp_path, config, total):
             with open(jsfile, 'r') as js:
                 resp = read_json_file(js, db_path, abs_path, cue_track)
                 if resp is not None:
-                    _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
+                    _LOGGER.debug("[{}/{} {}%] Using cached analyze results for {}".format(idx, total, pc, db_path))
                     return resp
         elif os.path.exists(jsfileGz):
             # GZIP compressed
             with gzip.open(jsfileGz, 'r') as js:
                 resp = read_json_file(js, db_path, abs_path, cue_track)
                 if resp is not None:
-                    _LOGGER.debug("[%d/%d] Using cached analyze results for %s" % (idx, total, db_path))
+                    _LOGGER.debug("[{}/{} {}%] Using cached analyze results for {}".format(idx, total, pc, db_path))
                     return resp
 
         path = jsfile[:-(len(os.path.basename(jsfile)))-1]
@@ -94,10 +95,10 @@ def analyse_track(idx, db_path, abs_path, cue_track, tmp_path, config, total):
         jsfile = "%s/essentia-%d.json" % (tmp_path, idx)
 
     if not os.path.exists(jsfile):
-        _LOGGER.debug('[%d/%d] Analyzing: %s' % (idx, total, db_path))
+        _LOGGER.debug('[{}/{} {}%] Analyzing: {}'.format(idx, total, pc, db_path))
         subprocess.call([config['extractor'], abs_path, jsfile, 'profile'], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=pathlib.Path(__file__).parent.parent.absolute())
     if not os.path.exists(jsfile):
-        _LOGGER.error('[%d/%d] Analysis of %s failed, no JSON created' % (idx, total, db_path))
+        _LOGGER.error('[{}/{} {}%] Analysis of {} failed, no JSON created'.format(idx, total, pc, db_path))
         return None
     try:
         resp = None
