@@ -27,8 +27,9 @@ def get_files_to_analyse(db, lms_db, lms_path, path, files, essentia_root_len, t
     if os.path.isdir(path):
         for e in sorted(os.listdir(path)):
             get_files_to_analyse(db, lms_db, lms_path, os.path.join(path, e), files, essentia_root_len, tmp_path, tmp_path_len, meta_only)
-    elif path.rsplit('.', 1)[1].lower() in AUDIO_EXTENSIONS:
-        if os.path.exists(path.rsplit('.', 1)[0]+'.cue'):
+    parts = path.rsplit('.', 1)
+    if len(parts)>1 and parts[1].lower() in AUDIO_EXTENSIONS:
+        if os.path.exists(parts[0]+'.cue'):
             for track in cue.get_cue_tracks(lms_db, lms_path, path, essentia_root_len, tmp_path):
                 if meta_only or not db.file_already_analysed(track['file'][tmp_path_len:]):
                     files.append({'abs':track['file'], 'db':track['file'][tmp_path_len:], 'track':track, 'src':path})
