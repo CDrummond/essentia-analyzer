@@ -1,3 +1,7 @@
+**DEPRECATED** Please use [Music Similarity](https://github.com/CDrummond/music-similarity) instead.
+
+---
+
 # Essentia Analyzer
 
 Simple python3 script to analyze music files with Essentia and store details in
